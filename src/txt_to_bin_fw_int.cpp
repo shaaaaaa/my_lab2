@@ -83,15 +83,9 @@ int main(int argc, char** argv){
 	}
 	edge_count /=2;
 	vert_count = v_max - v_min + 1;
-	cout<<"edge count: "<<edge_count<<endl;
-	cout<<"max vertex id: "<<v_max<<endl;
-	cout<<"min vertex id: "<<v_min<<endl;
-
-	cout<<"edge count: "<<edge_count<<endl;
-	cout<<"vert count: "<<vert_count<<endl;
 	//step 2. each file size
 	int fd4 = open( "fw_adjacent.bin",O_CREAT|O_RDWR,00666 );
-	ftruncate(fd4, edge_count*sizeof(vertex_t));
+	ftruncate(fd4, edge_count*sizeof(vertex_t));                           
 	vertex_t* adj = (vertex_t*)mmap(NULL,edge_count*sizeof(vertex_t),PROT_READ|PROT_WRITE,MAP_SHARED,fd4,0);
 	
 	int fd5 = open( "head.bin",O_CREAT|O_RDWR,00666 );
@@ -143,7 +137,7 @@ int main(int argc, char** argv){
 	}
 //	exit(-1);
 	begin[0]=0;
-
+	begin[vert_count]=edge_count;
 	for(size_t i=1; i<vert_count; i++){
 		begin[i] = begin[i-1] + degree[i-1];
 	//	cout<<"begin: " <<begin[i]<<" "<<degree[i]<<endl;
@@ -197,7 +191,6 @@ int main(int argc, char** argv){
 			cout<<endl;
 //		}
 	}
-	cout<<begin[vert_count]<<endl;
 
 	for(int i=0; i<edge_count && i<64; i++){
 //	for(int i=0; i<64; i++){
@@ -226,14 +219,13 @@ int main(int argc, char** argv){
     size_t sub_next=0;
     size_t sub_vert_count=0;
 
-    int sub_graph_fd=open( "sub_graph.bin",O_CREAT|O_RDWR,00666 );
-    	ftruncate(sub_graph_fd, edge_count*sizeof(vertex_t));
-		vertex_t* sub_graph=(vertex_t*)mmap(NULL,(vert_count+1)*sizeof(vertex_t),PROT_READ|PROT_WRITE,MAP_SHARED,sub_graph_fd,0);
+	int sub_graph_fd=open( "sub_graph.bin",O_CREAT|O_RDWR,00666 );
+	ftruncate(sub_graph_fd, edge_count*sizeof(vertex_t));
+	vertex_t* sub_graph=(vertex_t*)mmap(NULL,(vert_count+1)*sizeof(vertex_t),PROT_READ|PROT_WRITE,MAP_SHARED,sub_graph_fd,0);
 
     while(sub_next<sub_file_size){
 		char* sss=sub_ss+sub_curr;
 		a = atoi(sss);
-				std::cout<<"sub_graph==1"<<" "<<a<<std::endl;
 
 		while((sub_ss[sub_next]!=' ')&&(sub_ss[sub_next]!='\n')&&(sub_ss[sub_next]!='\t')){
 			sub_next++;
@@ -278,8 +270,9 @@ int main(int argc, char** argv){
 	ftruncate(sub_fw_adj_fd, edge_count*sizeof(vertex_t));
 	vertex_t* sub_fw_adj = (vertex_t*)mmap(NULL,edge_count*sizeof(vertex_t),PROT_READ|PROT_WRITE,MAP_SHARED,sub_fw_adj_fd,0);
 
+
+
     sub_fw_begin[0]=0;
-	sub_fw_begin[vert_count]=sub_vert_count;
 	for(size_t i=1; i<vert_count; i++){
 		sub_fw_begin[i] = sub_fw_begin[i-1] + sub_indegree[i-1];
 //		cout<<"begin: " <<begin[i]<<" "<<degree[i]<<endl;
@@ -288,7 +281,6 @@ int main(int argc, char** argv){
 	sub_indegree[vert_count-1] = 0;
 
 	index_t sub_edge_count=0;
-
     for(size_t vert_id=0;vert_id<vert_count;vert_id++)
     {
         if(sub_graph[vert_id]==1)
@@ -297,29 +289,29 @@ int main(int argc, char** argv){
             index_t my_end = begin[vert_id+1];
             for(; my_beg<my_end; my_beg++)
             {
-		    			std::cout<<"vert_id==1: "<<vert_id<<" ";
                 vertex_t nebr=adj[my_beg];
                 if(sub_graph[nebr]==1)
                 {
-			cout<<" index: "<<sub_fw_begin[vert_id]+sub_indegree[vert_id]<<" nebr: "<<nebr<<std::endl;
                     sub_fw_adj[sub_fw_begin[vert_id]+sub_indegree[vert_id]]=nebr;
                     ++sub_indegree[vert_id];
-		    ++sub_edge_count;
+					++sub_edge_count;
                 }
             }
         }
     }
 
-    	sub_fw_begin[vert_count]=sub_edge_count;
+	sub_fw_begin[vert_count]=sub_edge_count;
 
-    	for(size_t vert_id=0;vert_id<vert_count;vert_id++)
-		    {
-			    index_t my_beg =sub_fw_begin[vert_id];
-			index_t my_end = sub_fw_begin[vert_id+1];
-				for(; my_beg<my_end; my_beg++)
-    				{
-					vertex_t nebr=sub_fw_adj[my_beg];									              std::cout<<"vert_id: "<<vert_id<<" nebr"<<nebr<<std::endl;															                }
-								        }
+	for(size_t vert_id=0;vert_id<vert_count;vert_id++)
+    {
+            index_t my_beg = sub_fw_begin[vert_id];
+            index_t my_end = sub_fw_begin[vert_id+1];
+            for(; my_beg<my_end; my_beg++)
+            {
+                vertex_t nebr=sub_fw_adj[my_beg];
+            }
+    }
+    
 
 	
 	munmap(sub_fw_begin,sizeof(index_t)*vert_count+1);
@@ -328,8 +320,9 @@ int main(int argc, char** argv){
 	munmap(sub_fw_adj,edge_count*sizeof(vertex_t));
 	close(sub_fw_adj_fd);
 
+	
 	munmap(sub_graph,(vert_count+1)*sizeof(vertex_t));
-		close(sub_graph_fd);
+	close(sub_graph_fd);
 
 	munmap( ss,sizeof(char)*file_size );
 	munmap( adj,sizeof(vertex_t)*edge_count );

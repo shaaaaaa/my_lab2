@@ -82,12 +82,6 @@ int main(int argc, char** argv){
 	}
 	edge_count /=2;
 	vert_count = v_max - v_min + 1;
-	cout<<"edge count: "<<edge_count<<endl;
-	cout<<"max vertex id: "<<v_max<<endl;
-	cout<<"min vertex id: "<<v_min<<endl;
-
-	cout<<"edge count: "<<edge_count<<endl;
-	cout<<"vert count: "<<vert_count<<endl;
 	//step 2. each file size
 	int fd4 = open( "bw_adjacent.bin",O_CREAT|O_RDWR,00666 );
 	ftruncate(fd4, edge_count*sizeof(vertex_t));
@@ -239,7 +233,6 @@ int main(int argc, char** argv){
     while(sub_next<sub_file_size){
 		char* sss=sub_ss+sub_curr;
 		a = atoi(sss);
-		std::cout<<"sub_graph==1"<<" "<<a<<std::endl;
 
 		while((sub_ss[sub_next]!=' ')&&(sub_ss[sub_next]!='\n')&&(sub_ss[sub_next]!='\t')){
 			sub_next++;
@@ -299,7 +292,6 @@ int main(int argc, char** argv){
     {
         if(sub_graph[vert_id]==1)
         {
-			std::cout<<"vert_id==1: "<<vert_id<<" ";
             index_t my_beg = begin[vert_id];
             index_t my_end = begin[vert_id+1];
             for(; my_beg<my_end; my_beg++)
@@ -307,7 +299,6 @@ int main(int argc, char** argv){
                 vertex_t nebr=adj[my_beg];
                 if(sub_graph[nebr]==1)
                 {
-					cout<<" index: "<<sub_fw_begin[vert_id]+sub_indegree[vert_id]<<" nebr: "<<nebr<<std::endl;
                     sub_fw_adj[sub_fw_begin[vert_id]+sub_indegree[vert_id]]=nebr;
                     ++sub_indegree[vert_id];
 					++sub_edge_count;
@@ -325,7 +316,6 @@ int main(int argc, char** argv){
             for(; my_beg<my_end; my_beg++)
             {
                 vertex_t nebr=sub_fw_adj[my_beg];
-                std::cout<<"vert_id:"<<vert_id<<" nebr"<<nebr<<std::endl;
             }
     }
     
